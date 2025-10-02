@@ -1,0 +1,11 @@
+.env
+*.lpk
+dist/
+**/trivy-web-server
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/build/
+
+backend/configs/
+backend/reports/

@@ -1,0 +1,363 @@
+# ========== 一、基本信息 ==========
+
+# 应用唯一 ID (全球唯一,建议以域名开头)
+package: cloud.lazycat.app.liu.trivy
+
+# 应用版本号
+version: 0.0.1
+
+# 应用名称
+name: Trivy Web UI
+
+# 关键词
+keyword: trivy, security, vulnerability, scan, container, image
+
+# 应用描述
+description: 容器镜像安全扫描工具，基于 Aqua Security Trivy，提供简洁的 Web UI 界面
+
+# ========== 二、本地化配置 ==========
+locales:
+  zh:
+    name: Trivy Web UI
+    description: |
+      ## Trivy Web UI - 容器镜像安全扫描工具
+
+      基于 Aqua Security Trivy 的容器镜像安全扫描工具，提供简洁的 Web UI 界面，用于对容器镜像进行漏洞扫描、配置检查和 SBOM 生成。
+
+      ## 主要功能
+
+      - 🔍 **漏洞扫描**：检测操作系统包和应用依赖中的已知漏洞（CVE）
+      - ⚙️ **配置检查**：检测 IaC（Infrastructure as Code）配置错误
+      - 🔐 **密钥扫描**：发现代码中的敏感信息泄露
+      - 📋 **SBOM 生成**：生成软件物料清单（CycloneDX, SPDX 格式）
+      - 📊 **实时日志**：通过 SSE 推送实时扫描日志
+      - 📦 **多格式报告**：支持 JSON、HTML、SARIF、Table 等多种格式导出
+      - 💾 **配置管理**：保存和管理常用扫描配置（支持多配置快速切换）
+      - 🔒 **OIDC 认证**：统一认证支持，用户配置隔离
+      - 📜 **扫描历史**：保留完整的扫描历史，支持结果对比和趋势分析
+      - 🎯 **任务队列**：串行执行扫描任务，确保系统稳定性
+
+      ## 使用说明
+
+      1. **填写镜像地址**（例如：`docker.io/library/nginx:latest`）
+         - 如果是私有仓库，填写对应的用户名和密码
+         - 可以选择是否验证 TLS 证书（默认会验证）
+
+      2. **配置扫描选项**（可选）
+         - **漏洞严重等级**：选择要显示的漏洞等级（CRITICAL/HIGH/MEDIUM/LOW/UNKNOWN）
+         - **扫描器类型**：选择扫描类型（漏洞/配置错误/密钥泄露/许可证）
+         - **检测优先级**：精确模式（减少误报）或全面模式（更多检测）
+         - **包类型**：仅扫描操作系统包或应用依赖包
+         - **输出格式**：JSON/Table/SARIF/CycloneDX/SPDX
+
+      3. **点击"开始扫描"按钮**
+         - 实时查看扫描进度和日志
+         - 任务完成后查看漏洞统计和详细列表
+         - 支持下载多种格式的扫描报告
+
+      ## 配置保存功能
+
+      - 通过**配置管理面板**可以保存常用配置，方便下次使用
+      - 支持多配置管理，每个配置最大 4KB
+      - 每个用户最多保存 1000 个配置
+      - 启用 OIDC 认证后，配置自动隔离，每个用户独立管理
+      - **密码保存控制**：默认不保存密码（极致安全），可通过配置启用
+
+      ## 扫描历史管理
+
+      - 查看所有扫描历史记录（按时间倒序）
+      - 支持按状态筛选（全部/成功/失败/进行中）
+      - 支持按镜像名称搜索
+      - 支持按时间范围筛选
+      - 查看漏洞统计和详细列表
+      - 下载多种格式的扫描报告
+
+      ## 安全特性
+
+      ### 防护机制
+      - ✅ **命令注入防护**：不经过 shell，从根本上避免命令注入风险
+      - ✅ **输入验证**：所有用户输入经过严格的白名单验证
+      - ✅ **参数注入防护**：拒绝包含 shell 元字符的输入
+      - ✅ **DoS 防护**：限制输入长度，防止内存耗尽攻击
+
+      ### 凭据安全
+      - ✅ **密码默认不保存**：配置保存功能默认禁止存储密码
+      - ✅ **日志自动脱敏**：所有日志输出中的凭据信息自动替换为 `***`
+      - ✅ **HTTPS 传输**：生产环境凭据通过 HTTPS POST 请求体传输
+      - ✅ **内存临时存储**：凭据仅在执行 Trivy 时临时使用，不持久化到磁盘
+
+      ### 用户隔离
+      - ✅ **OIDC 统一认证**：与 Lazycat Cloud 微服认证系统集成
+      - ✅ **配置隔离**：每个用户的配置存储在独立目录
+      - ✅ **会话管理**：HttpOnly Cookie，7 天有效期，自动过期清理
+      - ✅ **访问控制**：所有扫描 API 均需认证，未认证访问自动跳转登录
+
+      ### 资源限制
+      - ✅ **配置大小限制**：单个配置最大 4KB，防止存储空间滥用
+      - ✅ **配置数量限制**：每个用户最多 1000 个配置，防止 DoS 攻击
+      - ✅ **超时控制**：默认 10 分钟超时，防止任务无限执行消耗资源
+      - ✅ **串行执行**：任务队列机制，同时只运行一个扫描任务，保持系统稳定
+
+  en:
+    name: Trivy Web UI
+    description: |
+      ## Trivy Web UI - Container Image Security Scanning Tool
+
+      A container image security scanning tool based on Aqua Security Trivy, providing a clean Web UI interface for vulnerability scanning, configuration checking, and SBOM generation.
+
+      ## Key Features
+
+      - 🔍 **Vulnerability Scanning**: Detect known vulnerabilities (CVE) in OS packages and application dependencies
+      - ⚙️ **Configuration Checking**: Detect IaC (Infrastructure as Code) configuration errors
+      - 🔐 **Secret Scanning**: Discover sensitive information leakage in code
+      - 📋 **SBOM Generation**: Generate Software Bill of Materials (CycloneDX, SPDX formats)
+      - 📊 **Real-time Logs**: Push real-time scan logs via SSE
+      - 📦 **Multi-format Reports**: Support JSON, HTML, SARIF, Table and more formats
+      - 💾 **Configuration Management**: Save and manage frequently-used scan configurations
+      - 🔒 **OIDC Authentication**: Unified authentication support, user configuration isolation
+      - 📜 **Scan History**: Keep complete scan history, support result comparison and trend analysis
+      - 🎯 **Task Queue**: Serial execution of scan tasks, ensure system stability
+
+      ## Usage Instructions
+
+      1. **Fill in Image Address** (e.g., `docker.io/library/nginx:latest`)
+         - For private registries, provide username and password
+         - Choose whether to verify TLS certificates (verified by default)
+
+      2. **Configure Scan Options** (optional)
+         - **Vulnerability Severity**: Select vulnerability levels to display (CRITICAL/HIGH/MEDIUM/LOW/UNKNOWN)
+         - **Scanner Types**: Select scan types (vuln/misconfig/secret/license)
+         - **Detection Priority**: Precise mode (reduce false positives) or Comprehensive mode (more detection)
+         - **Package Types**: Scan only OS packages or application dependencies
+         - **Output Format**: JSON/Table/SARIF/CycloneDX/SPDX
+
+      3. **Click "Start Scan" Button**
+         - View scan progress and logs in real-time
+         - View vulnerability statistics and detailed list after completion
+         - Download scan reports in various formats
+
+      ## Configuration Save Feature
+
+      - Save frequently-used configurations via **Configuration Management Panel**
+      - Multi-configuration management support, max 4KB per config
+      - Maximum 1000 configs per user
+      - With OIDC authentication enabled, configs are automatically isolated per user
+      - **Password Save Control**: Passwords not saved by default (maximum security), can be enabled via configuration
+
+      ## Scan History Management
+
+      - View all scan history records (sorted by time descending)
+      - Filter by status (all/success/failed/running)
+      - Search by image name
+      - Filter by time range
+      - View vulnerability statistics and detailed list
+      - Download scan reports in various formats
+
+      ## Security Features
+
+      ### Protection Mechanisms
+      - ✅ **Command Injection Protection**: No shell execution, fundamentally prevents command injection
+      - ✅ **Input Validation**: All user inputs strictly validated with whitelist
+      - ✅ **Parameter Injection Protection**: Rejects inputs containing shell metacharacters
+      - ✅ **DoS Protection**: Input length limits prevent memory exhaustion attacks
+
+      ### Credential Security
+      - ✅ **Passwords Not Saved by Default**: Config save feature disables password storage by default
+      - ✅ **Automatic Log Sanitization**: All credential information in logs automatically replaced with `***`
+      - ✅ **HTTPS Transmission**: Production environment credentials transmitted via HTTPS POST
+      - ✅ **Temporary Memory Storage**: Credentials only used temporarily during Trivy execution
+
+      ### User Isolation
+      - ✅ **OIDC Unified Authentication**: Integrated with Lazycat Cloud authentication system
+      - ✅ **Configuration Isolation**: Each user's configurations stored in separate directories
+      - ✅ **Session Management**: HttpOnly Cookie, 7-day validity, automatic expiration cleanup
+      - ✅ **Access Control**: All scan APIs require authentication, unauthenticated access redirects to login
+
+      ### Resource Limits
+      - ✅ **Config Size Limit**: Maximum 4KB per config, prevents storage space abuse
+      - ✅ **Config Count Limit**: Maximum 1000 configs per user, prevents DoS attacks
+      - ✅ **Timeout Control**: Default 10-minute timeout, prevents infinite task execution
+      - ✅ **Serial Execution**: Task queue mechanism, only one scan task runs at a time, keeps system stable
+
+# ========== 三、许可证和主页 ==========
+
+# 软件 license
+license: https://choosealicense.com/licenses/mit/
+
+# 软件主页
+homepage: https://github.com/lazycatapps/trivy
+
+# lpk 作者
+author: liu
+
+# ========== 四、Application 配置 ==========
+
+# application 作为一个特殊的 container 运行，对应的 service 名称为固定的 `app`
+# 其他 service 可以通过此名称与 app 进行通讯
+application:
+  # 是否存在后台任务，若存在则系统不会对此 app 进行主动休眠
+  background_task: true
+
+  # 期望的 app 域名，如果系统中已经有对应域名则会提示用户选择其他域名
+  # 最终 app 分配到的域名以 /lzcapp/run/app.subdomain 为准
+  subdomain: trivy
+
+  # OIDC 认证回调路径
+  oidc_redirect_path: /api/v1/auth/callback
+
+  # HTTP 路由规则
+  routes:
+    # 前端静态文件服务
+    - /=file:///lzcapp/pkg/content/web
+    # 后端 API 代理
+    - /api/=http://backend.cloud.lazycat.app.liu.trivy.lzcapp:59903/api/
+
+  # 依赖的其他容器服务
+  depends_on:
+    - backend
+    - trivy-server
+
+  # 是否启用多实例
+  multi_instance: false
+
+# ========== 五、Services 配置 ==========
+
+services:
+  # Trivy Server 服务
+  trivy-server:
+    image: ##IMAGE_PLACEHOLDER##
+    # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
+    # 运行用户（使用非 root 用户）
+    user: 65532
+    # 安装脚本（创建缓存目录、复制内置漏洞库并设置权限）
+    setup_script: |
+      #!/bin/sh
+      # 创建缓存目录
+      mkdir -p /lzcapp/cache/trivy
+
+      # 如果容器自带漏洞库（$HOME/.cache/trivy），则复制到持久化缓存目录
+      if [ -d "/home/nonroot/.cache/trivy" ]; then
+        echo "Copying built-in vulnerability database to cache directory..."
+        cp -r /home/nonroot/.cache/trivy/* /lzcapp/cache/trivy/
+        echo "Vulnerability database copied successfully"
+      else
+        echo "No built-in vulnerability database found, will download on first use"
+      fi
+
+      # 设置权限
+      chown -R 65532:65532 /lzcapp/cache/trivy
+      echo "Trivy cache directory prepared"
+
+      # 自动导出环境变量到临时文件（排除个人环境变量如 HOME, USER, SHELL 等）
+      env | grep -vE '^(HOME=|USER=|SHELL=|PWD=|LOGNAME=|PATH=)' | sed 's/^/export /' > /tmp/trivy-server.env
+
+      # Run Trivy server as the nonroot user from its home directory
+      su -s /bin/sh nonroot -c "source /tmp/trivy-server.env && cd ~ && trivy server --listen \${TRIVY_LISTEN} --cache-dir \${TRIVY_CACHE_DIR} --skip-db-update=\${TRIVY_SKIP_DB_UPDATE:-false}"
+    # 环境变量
+    environment:
+      - TRIVY_LISTEN=host.lzcapp:59902  # 监听地址，host.lzcapp 是特定地址，不监听 0.0.0.0 避免安全风险
+      - TRIVY_CACHE_DIR=/lzcapp/cache/trivy  # 指定缓存目录
+      - HOME=/home/nonroot  # 非 root 用户的 home 目录
+      - TZ=Asia/Shanghai
+
+      # 漏洞库配置（Trivy Server 端）
+      - TRIVY_SKIP_DB_UPDATE=false  # 启用自动更新（推荐，默认 false）
+      # 如需使用国内镜像源，取消下面两行注释并配置实际的 URL
+      # - TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db
+      # - TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db
+    # 健康检测
+    health_check:
+      test:
+        - CMD
+        - trivy
+        - --version
+      start_period: 60s
+      disable: false
+    # 使用主机网络模式
+    network_mode: "host"
+    # 备注：使用 host 网络模式，Trivy Server 监听 0.0.0.0:59902
+
+  # Backend 后端服务
+  backend:
+    # 使用占位符，构建时会替换为实际镜像地址
+    image: ##IMAGE_PLACEHOLDER##
+    # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
+    # 运行用户（非 root 用户，UID 65532）
+    user: 65532
+    # 安装脚本（root 权限，初始化配置目录权限并配置 Docker 访问）
+    setup_script: |
+      #!/bin/sh
+      # 获取 Docker 组 GID（从环境变量，默认 996）
+      DOCKER_GID=${DOCKER_GID:-996}
+
+      # 创建 docker 组
+      addgroup -g ${DOCKER_GID} docker 2>/dev/null || true
+
+      # 创建用户并加入 docker 组
+      adduser -u 65532 -D -h /app -s /bin/sh nonroot 2>/dev/null || true
+      addgroup nonroot docker 2>/dev/null || true
+
+      # 配置目录权限
+      chown -R 65532:65532 /configs /reports
+
+      # 创建并设置 Trivy Client 缓存目录权限（用于存储临时扫描文件）
+      mkdir -p /lzcapp/cache/trivy-client
+      chown -R 65532:65532 /lzcapp/cache/trivy-client
+
+      echo "Setup complete: user 65532 added to docker group (GID ${DOCKER_GID})"
+
+    # 环境变量配置
+    environment:
+      # 服务监听配置
+      - TRIVY_HOST=host.lzcapp  # 监听地址，host.lzcapp 表示使用 host 网络模式
+      - TRIVY_PORT=59903
+
+      # Trivy Server 地址配置（Client-Server 模式）
+      - TRIVY_TRIVY_SERVER=http://host.lzcapp:59902
+
+      # Trivy Client 缓存目录（用于存储临时扫描文件，不是漏洞库）
+      - TRIVY_CACHE_DIR=/lzcapp/cache/trivy-client
+
+      # 扫描任务配置
+      - TRIVY_TIMEOUT=600  # 扫描超时时间（秒），默认 600
+
+      # CORS 跨域配置
+      - TRIVY_CORS_ALLOWED_ORIGINS=http://host.lzcapp:59903,https://${LAZYCAT_APP_DOMAIN}
+
+      # 用户配置存储设置
+      - TRIVY_CONFIG_DIR=/configs  # 配置文件存储目录，默认 /configs
+      - TRIVY_REPORTS_DIR=/reports  # 配置文件存储目录，默认 /reports
+      - TRIVY_ALLOW_PASSWORD_SAVE=false  # 是否允许保存密码到配置文件，默认 false（极致安全）
+      - TRIVY_MAX_CONFIG_SIZE=4096  # 单个配置文件最大大小（字节），默认 4096
+      - TRIVY_MAX_CONFIG_FILES=1000  # 每个用户最大配置文件数量，默认 1000
+
+      # Docker 访问配置
+      - DOCKER_GID=996  # Docker 组 GID，默认 996（可根据宿主机实际情况调整）
+      - TRIVY_ENABLE_DOCKER_SCAN=false  # 启用 Docker socket 访问扫描本地镜像（需要 Docker socket 挂载）
+
+      # 时区配置
+      - TZ=Asia/Shanghai
+
+      # OIDC 认证配置（自动注入，无需手动修改）
+      - TRIVY_OIDC_CLIENT_ID=${LAZYCAT_AUTH_OIDC_CLIENT_ID}
+      - TRIVY_OIDC_CLIENT_SECRET=${LAZYCAT_AUTH_OIDC_CLIENT_SECRET}
+      - TRIVY_OIDC_ISSUER=${LAZYCAT_AUTH_OIDC_ISSUER_URI}
+      - TRIVY_OIDC_REDIRECT_URL=https://${LAZYCAT_APP_DOMAIN}/api/v1/auth/callback
+
+    # 健康检测
+    health_check:
+      test_url: http://host.lzcapp:59903/api/v1/health
+      start_period: 30s
+      disable: false
+
+    # 使用主机网络模式
+    network_mode: "host"
+
+    # 数据持久化（配置文件 + Docker socket）
+    binds:
+      - /lzcapp/var/configs:/configs                # 配置持久化
+      - /lzcapp/cache/reports:/reports              # 报告结果缓存
+
+    # 依赖服务（确保 Trivy Server 先启动）
+    depends_on:
+      - trivy-server
