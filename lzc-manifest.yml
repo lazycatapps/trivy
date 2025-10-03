@@ -31,7 +31,7 @@ locales:
       - 🔐 **密钥扫描**：发现代码中的敏感信息泄露
       - 📋 **SBOM 生成**：生成软件物料清单（CycloneDX, SPDX 格式）
       - 📊 **实时日志**：通过 SSE 推送实时扫描日志
-      - 📦 **多格式报告**：支持 JSON、HTML、SARIF、Table 等多种格式导出
+      - 📦 **多格式报告**：支持 JSON、SARIF、Table 等多种格式导出
       - 💾 **配置管理**：保存和管理常用扫描配置（支持多配置快速切换）
       - 🔒 **OIDC 认证**：统一认证支持，用户配置隔离
       - 📜 **扫描历史**：保留完整的扫描历史，支持结果对比和趋势分析
@@ -112,7 +112,7 @@ locales:
       - 🔐 **Secret Scanning**: Discover sensitive information leakage in code
       - 📋 **SBOM Generation**: Generate Software Bill of Materials (CycloneDX, SPDX formats)
       - 📊 **Real-time Logs**: Push real-time scan logs via SSE
-      - 📦 **Multi-format Reports**: Support JSON, HTML, SARIF, Table and more formats
+      - 📦 **Multi-format Reports**: Support JSON, SARIF, Table and more formats
       - 💾 **Configuration Management**: Save and manage frequently-used scan configurations
       - 🔒 **OIDC Authentication**: Unified authentication support, user configuration isolation
       - 📜 **Scan History**: Keep complete scan history, support result comparison and trend analysis

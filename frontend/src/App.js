@@ -1161,7 +1161,6 @@ function AppContent() {
                         menu={{
                           items: [
                             { key: 'json', label: 'JSON', onClick: () => handleDownloadReport(record.id, 'json') },
-                            { key: 'html', label: 'HTML', onClick: () => handleDownloadReport(record.id, 'html') },
                             { key: 'sarif', label: 'SARIF', onClick: () => handleDownloadReport(record.id, 'sarif') },
                             { key: 'cyclonedx', label: 'CycloneDX', onClick: () => handleDownloadReport(record.id, 'cyclonedx') },
                             { key: 'spdx', label: 'SPDX', onClick: () => handleDownloadReport(record.id, 'spdx') },
