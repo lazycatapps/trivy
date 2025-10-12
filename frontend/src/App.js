@@ -105,6 +105,10 @@ function AppContent() {
   const [dockerContainersLoading, setDockerContainersLoading] = useState(false);
   const [dockerActiveTab, setDockerActiveTab] = useState('containers');
 
+  // Docker search state
+  const [dockerImageSearch, setDockerImageSearch] = useState('');
+  const [dockerContainerSearch, setDockerContainerSearch] = useState('');
+
   // Logs modal state
   const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [logsModalMaximized, setLogsModalMaximized] = useState(false);
@@ -469,8 +473,11 @@ function AppContent() {
   const openDockerModal = useCallback(async () => {
     setDockerImagesModalVisible(true);
     setDockerActiveTab('containers');
-    await loadDockerContainers();
-    await loadDockerImages();
+    // Load both lists in parallel for better performance
+    await Promise.all([
+      loadDockerContainers(),
+      loadDockerImages()
+    ]);
   }, [loadDockerContainers, loadDockerImages]);
 
   // Select Docker image
@@ -1440,7 +1447,12 @@ function AppContent() {
             </div>
           }
           open={dockerImagesModalVisible}
-          onCancel={() => setDockerImagesModalVisible(false)}
+          onCancel={() => {
+            setDockerImagesModalVisible(false);
+            // Reset search when closing modal
+            setDockerImageSearch('');
+            setDockerContainerSearch('');
+          }}
           footer={[
             <Button key="close" onClick={() => setDockerImagesModalVisible(false)}>
               关闭
@@ -1457,15 +1469,19 @@ function AppContent() {
                 label: `运行中容器 (${dockerContainers.length})`,
                 children: (
                   <>
-                    <Alert
-                      message="提示"
-                      description="点击行可直接选择镜像并填充到表单"
-                      type="info"
-                      showIcon
+                    <Input.Search
+                      placeholder="搜索容器名称或镜像"
+                      value={dockerContainerSearch}
+                      onChange={(e) => setDockerContainerSearch(e.target.value)}
                       style={{ marginBottom: '16px' }}
+                      allowClear
                     />
                     <Table
-                      dataSource={dockerContainers}
+                      dataSource={dockerContainers.filter(container => {
+                        const searchLower = dockerContainerSearch.toLowerCase();
+                        return container.containerName.toLowerCase().includes(searchLower) ||
+                               container.image.toLowerCase().includes(searchLower);
+                      })}
                       rowKey="containerId"
                       pagination={{
                         defaultPageSize: 10,
@@ -1555,15 +1571,19 @@ function AppContent() {
                 label: `镜像列表 (${dockerImages.length})`,
                 children: (
                   <>
-                    <Alert
-                      message="提示"
-                      description="点击行可直接选择镜像并填充到表单"
-                      type="info"
-                      showIcon
+                    <Input.Search
+                      placeholder="搜索镜像名称"
+                      value={dockerImageSearch}
+                      onChange={(e) => setDockerImageSearch(e.target.value)}
                       style={{ marginBottom: '16px' }}
+                      allowClear
                     />
                     <Table
-                      dataSource={dockerImages}
+                      dataSource={dockerImages.filter(image => {
+                        const searchLower = dockerImageSearch.toLowerCase();
+                        return image.repository.toLowerCase().includes(searchLower) ||
+                               image.fullName.toLowerCase().includes(searchLower);
+                      })}
                       rowKey="imageId"
                       pagination={{
                         defaultPageSize: 10,
