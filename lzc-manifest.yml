@@ -4,7 +4,7 @@
 package: cloud.lazycat.app.liu.trivy
 
 # 应用版本号
-version: 0.0.1
+version: 0.0.2
 
 # 应用名称
 name: Trivy Web UI
@@ -212,6 +212,9 @@ application:
     # 后端 API 代理
     - /api/=http://backend.cloud.lazycat.app.liu.trivy.lzcapp:59903/api/
 
+  public_path:
+    - /                         # 无需登录即可访问
+
   # 依赖的其他容器服务
   depends_on:
     - backend
@@ -333,7 +336,7 @@ services:
 
       # Docker 访问配置
       - DOCKER_GID=996  # Docker 组 GID，默认 996（可根据宿主机实际情况调整）
-      - TRIVY_ENABLE_DOCKER_SCAN=false  # 启用 Docker socket 访问扫描本地镜像（需要 Docker socket 挂载）
+      - TRIVY_ENABLE_DOCKER_SCAN=true  # 启用 Docker socket 访问扫描本地镜像（需要 Docker socket 挂载）
 
       # 时区配置
       - TZ=Asia/Shanghai

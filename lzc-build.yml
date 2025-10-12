@@ -34,14 +34,15 @@ devshell:
     export npm_config_registry=https://registry.npmmirror.com
     export GOPROXY=https://goproxy.cn,direct
 
+# 也可直接在 /data/system/pkgm/override/cloud.lazycat.app.liu.trivy.override.yml 中放入如下内容。
 # # 高级配置
-# compose_override:
-#   services:
-#     backend:
-#       volumes:
-#         # 绑定 lzc-docker 的 socket 文件到容器中
-#         - /lzcsys/run/lzc-docker/docker.sock:/var/run/docker.sock:ro
-#         # 绑定 playground 目录到容器中
-#         # - /data/playground/docer.sock:/var/run/docker.sock:ro
-#         # 绑定宿主机 的 docker socket 到容器中
-#         # - /var/run/docker.sock:/var/run/docker.sock:ro
+compose_override:
+  services:
+    backend:
+      volumes:
+        # 绑定 lzc-docker 的 socket 文件到容器中
+        - /lzcsys/run/lzc-docker/docker.sock:/var/run/docker.sock:ro
+        # 绑定 playground 目录到容器中
+        # - /data/playground/docer.sock:/var/run/docker.sock:ro
+        # 绑定宿主机 的 docker socket 到容器中
+        # - /var/run/docker.sock:/var/run/docker.sock:ro

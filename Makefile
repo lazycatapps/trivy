@@ -84,6 +84,48 @@ frontend-clean: ##@Frontend Clean frontend build artifacts
 	-rm -rf ./frontend/node_modules/.cache
 	@echo "Frontend clean completed!"
 
+frontend-outdated: ##@Frontend Check outdated frontend dependencies
+	@echo "Checking outdated frontend dependencies..."
+	@CURRENT_REGISTRY=$$(npm config get registry); \
+	npm config set registry https://registry.npmjs.org/; \
+	cd frontend && npm outdated; \
+	npm config set registry $$CURRENT_REGISTRY || true
+	@echo "Check completed! (exit code 1 if outdated packages exist)"
+
+frontend-update: ##@Frontend Update frontend dependencies to compatible versions
+	@echo "Updating frontend dependencies to compatible versions..."
+	@CURRENT_REGISTRY=$$(npm config get registry); \
+	npm config set registry https://registry.npmjs.org/; \
+	cd frontend && npm update; \
+	npm config set registry $$CURRENT_REGISTRY
+	@echo "Update completed!"
+
+frontend-upgrade: ##@Frontend Upgrade all frontend dependencies to latest versions (requires npm-check-updates)
+	@echo "Upgrading all frontend dependencies to latest versions..."
+	@if ! command -v ncu >/dev/null 2>&1; then \
+		echo "Error: npm-check-updates is not installed"; \
+		echo "Install it with: npm install -g npm-check-updates"; \
+		exit 1; \
+	fi
+	@CURRENT_REGISTRY=$$(npm config get registry); \
+	npm config set registry https://registry.npmjs.org/; \
+	cd frontend && ncu -u && npm install; \
+	npm config set registry $$CURRENT_REGISTRY
+	@echo "Upgrade completed!"
+
+frontend-upgrade-interactive: ##@Frontend Interactively upgrade frontend dependencies (requires npm-check-updates)
+	@echo "Interactively upgrading frontend dependencies..."
+	@if ! command -v ncu >/dev/null 2>&1; then \
+		echo "Error: npm-check-updates is not installed"; \
+		echo "Install it with: npm install -g npm-check-updates"; \
+		exit 1; \
+	fi
+	@CURRENT_REGISTRY=$$(npm config get registry); \
+	npm config set registry https://registry.npmjs.org/; \
+	cd frontend && ncu -i && npm install; \
+	npm config set registry $$CURRENT_REGISTRY
+	@echo "Interactive upgrade completed!"
+
 test: ##@Development Run backend tests
 	cd backend && go test -v ./...
 
