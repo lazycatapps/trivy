@@ -284,7 +284,7 @@ function AppContent() {
           image: data.imagePrefix || '',
           username: data.username ? atob(data.username) : '',
           password: data.password ? atob(data.password) : '',
-          tlsVerify: data.tlsVerify !== undefined ? data.tlsVerify : true,
+          tlsVerify: data.tlsVerify !== undefined ? data.tlsVerify : false,
           severity: data.severity || [],
           ignoreUnfixed: data.ignoreUnfixed || false,
           scanners: data.scanners || ['vuln'],
@@ -353,7 +353,7 @@ function AppContent() {
         imagePrefix: values.image || '',
         username: values.username ? btoa(values.username) : '',
         password: values.password ? btoa(values.password) : '',
-        tlsVerify: values.tlsVerify !== undefined ? values.tlsVerify : true,
+        tlsVerify: values.tlsVerify !== undefined ? values.tlsVerify : false,
         severity: values.severity || [],
         ignoreUnfixed: values.ignoreUnfixed || false,
         scanners: values.scanners || ['vuln'],
@@ -827,7 +827,7 @@ function AppContent() {
             onFinish={onFinish}
             initialValues={{
               image: '',
-              tlsVerify: true,
+              tlsVerify: false,
               severity: [],
               ignoreUnfixed: false,
               scanners: ['vuln'],

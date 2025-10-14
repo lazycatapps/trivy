@@ -4,7 +4,7 @@
 package: cloud.lazycat.app.liu.trivy
 
 # 应用版本号
-version: 0.0.2
+version: 0.0.4
 
 # 应用名称
 name: Trivy Web UI
@@ -255,6 +255,7 @@ services:
       env | grep -vE '^(HOME=|USER=|SHELL=|PWD=|LOGNAME=|PATH=)' | sed 's/^/export /' > /tmp/trivy-server.env
 
       # Run Trivy server as the nonroot user from its home directory
+      # TODO: 当前 trivy server 不支持跳过 java 漏洞库更新，需要该 trivy 社区反馈。
       su -s /bin/sh nonroot -c "source /tmp/trivy-server.env && cd ~ && trivy server --listen \${TRIVY_LISTEN} --cache-dir \${TRIVY_CACHE_DIR} --skip-db-update=\${TRIVY_SKIP_DB_UPDATE:-false}"
     # 环境变量
     environment:
@@ -264,17 +265,18 @@ services:
       - TZ=Asia/Shanghai
 
       # 漏洞库配置（Trivy Server 端）
-      - TRIVY_SKIP_DB_UPDATE=false  # 启用自动更新（推荐，默认 false）
+      - TRIVY_SKIP_DB_UPDATE=true  # 跳过主漏洞库更新
+      - TRIVY_SKIP_JAVA_DB_UPDATE=true  # 跳过 java 漏洞库更新
       # 如需使用国内镜像源，取消下面两行注释并配置实际的 URL
       # - TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db
       # - TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db
     # 健康检测
     health_check:
       test:
-        - CMD
-        - trivy
-        - --version
-      start_period: 60s
+        - CMD-SHELL
+        # 使用 timeout 强制 3 秒后终止，返回码 200(成功) 或 404(不存在) 都视为健康
+        - 'timeout 3 wget -S -O /dev/null http://host.lzcapp:59902 2>&1 | grep -qE "HTTP/.* (200|404)"'
+      start_period: 30s
       disable: false
     # 使用主机网络模式
     network_mode: "host"
@@ -308,6 +310,9 @@ services:
       chown -R 65532:65532 /lzcapp/cache/trivy-client
 
       echo "Setup complete: user 65532 added to docker group (GID ${DOCKER_GID})"
+
+      # 临时使用该方案启动服务，避免在 LC02 上遇到权限问题。
+      su -s /bin/sh nonroot -c "/app/trivy-web-server"
 
     # 环境变量配置
     environment:
