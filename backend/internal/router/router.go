@@ -80,6 +80,7 @@ func (r *Router) Setup(cfg *types.Config) *gin.Engine {
 //   - GET    /config/:name         - Get a saved user configuration by name
 //   - POST   /config/:name         - Save user configuration with name
 //   - DELETE /config/:name         - Delete a saved user configuration by name
+//   - GET    /trivy/version        - Get Trivy Server version information
 func (r *Router) registerRoutes(engine *gin.Engine) {
 	api := engine.Group("/api/v1")
 	{
@@ -123,6 +124,9 @@ func (r *Router) registerRoutes(engine *gin.Engine) {
 
 		// System config endpoint (public)
 		api.GET("/system/config", r.configHandler.GetSystemConfig)
+
+		// Trivy Server version endpoint (public)
+		api.GET("/trivy/version", r.scanHandler.GetTrivyVersion)
 	}
 }
 

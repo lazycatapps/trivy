@@ -64,6 +64,21 @@ const debugLog = (category, ...args) => {
   };
 };
 
+// Format datetime to Chinese locale string with seconds
+const formatDateTime = (dateString) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+};
+
 function AppContent() {
   const { message, modal } = AntApp.useApp();
   const [form] = Form.useForm();
@@ -78,6 +93,9 @@ function AppContent() {
   const [systemConfig, setSystemConfig] = useState({
     enableDockerScan: false
   });
+
+  // Trivy Server version state
+  const [trivyServerVersion, setTrivyServerVersion] = useState(null);
 
   // Scan form state
   const [loading, setLoading] = useState(false);
@@ -172,6 +190,20 @@ function AppContent() {
       })
       .catch(err => {
         addDebugLog('ERROR', 'Failed to load system config:', err);
+      });
+  }, [addDebugLog]);
+
+  // Load Trivy Server version on mount
+  useEffect(() => {
+    addDebugLog('VERSION', 'Loading Trivy Server version');
+    fetch(`${BACKEND_API_URL}/api/v1/trivy/version`)
+      .then(res => res.json())
+      .then(data => {
+        addDebugLog('VERSION', 'Trivy Server version loaded:', data);
+        setTrivyServerVersion(data);
+      })
+      .catch(err => {
+        addDebugLog('ERROR', 'Failed to load Trivy Server version:', err);
       });
   }, [addDebugLog]);
 
@@ -1228,28 +1260,41 @@ function AppContent() {
 
         {/* Footer */}
         <div className="footer">
-          <Text type="secondary">
-            Trivy Web UI · v{APP_VERSION}
-            {GIT_COMMIT !== 'dev' && GIT_COMMIT_FULL !== 'development' && (
-              <>
-                {' · '}
-                <a
-                  href={`https://github.com/lazycatapps/trivy/commit/${GIT_COMMIT_FULL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Commit: ${GIT_COMMIT_FULL}`}
-                >
-                  {GIT_COMMIT}
-                </a>
-              </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Text type="secondary">
+              Trivy Web UI · v{APP_VERSION}
+              {GIT_COMMIT !== 'dev' && GIT_COMMIT_FULL !== 'development' && (
+                <>
+                  {' · '}
+                  <a
+                    href={`https://github.com/lazycatapps/trivy/commit/${GIT_COMMIT_FULL}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Commit: ${GIT_COMMIT_FULL}`}
+                  >
+                    {GIT_COMMIT}
+                  </a>
+                </>
+              )}
+              {' · '}
+              Copyright © {new Date().getFullYear()} Lazycat Apps
+              {' · '}
+              <a href="https://github.com/lazycatapps/trivy" target="_blank" rel="noopener noreferrer">
+                GitHub
+              </a>
+            </Text>
+            {trivyServerVersion && (
+              <Text type="secondary">
+                Trivy Server: {trivyServerVersion.version}
+                {trivyServerVersion.vulnerabilityDB && (
+                  <> · Vuln DB: v{trivyServerVersion.vulnerabilityDB.version} (更新: {formatDateTime(trivyServerVersion.vulnerabilityDB.updatedAt)})</>
+                )}
+                {trivyServerVersion.javaDB && (
+                  <> · Java DB: v{trivyServerVersion.javaDB.version} (更新: {formatDateTime(trivyServerVersion.javaDB.updatedAt)})</>
+                )}
+              </Text>
             )}
-            {' · '}
-            Copyright © {new Date().getFullYear()} Lazycat Apps
-            {' · '}
-            <a href="https://github.com/lazycatapps/trivy" target="_blank" rel="noopener noreferrer">
-              GitHub
-            </a>
-          </Text>
+          </div>
         </div>
 
         {/* Logs Modal */}

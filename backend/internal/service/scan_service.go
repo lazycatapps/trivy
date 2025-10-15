@@ -9,6 +9,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -114,6 +116,9 @@ type ScanService interface {
 
 	// GetQueueStatus returns the current queue status for a user.
 	GetQueueStatus(userID string) (*models.QueueStatusResponse, error)
+
+	// GetTrivyVersion retrieves version information from Trivy Server.
+	GetTrivyVersion(ctx context.Context) (*models.TrivyVersion, error)
 
 	// ListDockerImages lists Docker images from the host machine.
 	ListDockerImages() ([]models.DockerImage, error)
@@ -367,6 +372,29 @@ func (s *scanServiceImpl) executeScan(task *models.ScanTask) {
 	timeout := time.Duration(s.config.Timeout) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	// Fetch and record Trivy Server version
+	versionCtx, versionCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer versionCancel()
+	if version, err := s.GetTrivyVersion(versionCtx); err != nil {
+		s.logger.Error("Failed to fetch Trivy Server version: %v", err)
+		task.AddLog(fmt.Sprintf("Warning: Could not fetch Trivy Server version: %v", err))
+		// Don't fail the scan, just continue without version info
+	} else {
+		task.TrivyVersion = version
+		task.AddLog(fmt.Sprintf("Trivy Server version: %s", version.Version))
+		if version.VulnerabilityDB != nil {
+			task.AddLog(fmt.Sprintf("Vulnerability DB: v%d (updated: %s)",
+				version.VulnerabilityDB.Version,
+				version.VulnerabilityDB.UpdatedAt.Format(time.RFC3339)))
+		}
+		if version.JavaDB != nil {
+			task.AddLog(fmt.Sprintf("Java DB: v%d (updated: %s)",
+				version.JavaDB.Version,
+				version.JavaDB.UpdatedAt.Format(time.RFC3339)))
+		}
+		s.repo.Update(task)
+	}
 
 	// Build trivy command
 	args := s.buildTrivyArgs(task)
@@ -982,4 +1010,51 @@ func (s *scanServiceImpl) DeleteAllTasks(userID string) error {
 		deletedCount, userID, float64(deletedSize)/(1024*1024))
 
 	return nil
+}
+
+// GetTrivyVersion retrieves version information from Trivy Server.
+func (s *scanServiceImpl) GetTrivyVersion(ctx context.Context) (*models.TrivyVersion, error) {
+	if s.config.ServerURL == "" {
+		return nil, fmt.Errorf("trivy server URL not configured")
+	}
+
+	// Build version endpoint URL
+	versionURL := strings.TrimRight(s.config.ServerURL, "/") + "/version"
+	s.logger.Info("Fetching Trivy Server version from: %s", versionURL)
+
+	// Create HTTP request with context
+	req, err := http.NewRequestWithContext(ctx, "GET", versionURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Execute request
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch version: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("version endpoint returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var version models.TrivyVersion
+	if err := json.Unmarshal(body, &version); err != nil {
+		return nil, fmt.Errorf("failed to parse version JSON: %w", err)
+	}
+
+	s.logger.Info("Retrieved Trivy Server version: %s", version.Version)
+	return &version, nil
 }

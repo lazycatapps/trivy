@@ -252,3 +252,18 @@ func (h *ScanHandler) DeleteAllScans(c *gin.Context) {
 		"message": "All tasks deleted successfully",
 	})
 }
+
+// GetTrivyVersion handles GET /api/v1/trivy/version - Get Trivy Server version information.
+func (h *ScanHandler) GetTrivyVersion(c *gin.Context) {
+	h.logger.Info("Fetching Trivy Server version")
+
+	// Get version information from service
+	version, err := h.scanService.GetTrivyVersion(c.Request.Context())
+	if err != nil {
+		h.logger.Error("Failed to get Trivy Server version: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get Trivy Server version: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, version)
+}

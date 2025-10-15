@@ -5,6 +5,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,6 +22,7 @@ type mockScanService struct {
 	getTaskFunc        func(taskID string) (*models.ScanTask, error)
 	listTasksFunc      func(userID string, req *models.TaskListRequest) (*models.TaskListResponse, error)
 	getQueueStatusFunc func(userID string) (*models.QueueStatusResponse, error)
+	getTrivyVersionFunc func(ctx context.Context) (*models.TrivyVersion, error)
 }
 
 func (m *mockScanService) CreateScanTask(userID string, req *models.ScanRequest) (*models.ScanTask, error) {
@@ -47,6 +49,13 @@ func (m *mockScanService) ListTasks(userID string, req *models.TaskListRequest) 
 func (m *mockScanService) GetQueueStatus(userID string) (*models.QueueStatusResponse, error) {
 	if m.getQueueStatusFunc != nil {
 		return m.getQueueStatusFunc(userID)
+	}
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockScanService) GetTrivyVersion(ctx context.Context) (*models.TrivyVersion, error) {
+	if m.getTrivyVersionFunc != nil {
+		return m.getTrivyVersionFunc(ctx)
 	}
 	return nil, fmt.Errorf("not implemented")
 }

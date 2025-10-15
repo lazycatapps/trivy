@@ -37,9 +37,10 @@ type ScanTask struct {
 	QueuePosition int `json:"queuePosition,omitempty"` // Position in queue (0 = running)
 
 	// Scan results
-	Result      *ScanResult `json:"result,omitempty"`      // Parsed scan results
-	Output      string      `json:"output"`                // Complete log output
-	ErrorOutput string      `json:"errorOutput,omitempty"` // Error message (if failed)
+	Result       *ScanResult   `json:"result,omitempty"`       // Parsed scan results
+	Output       string        `json:"output"`                 // Complete log output
+	ErrorOutput  string        `json:"errorOutput,omitempty"`  // Error message (if failed)
+	TrivyVersion *TrivyVersion `json:"trivyVersion,omitempty"` // Trivy Server version info at scan time
 
 	// Log streaming
 	LogLines     []string      `json:"-"` // In-memory log lines (not serialized)

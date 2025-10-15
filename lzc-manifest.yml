@@ -272,10 +272,7 @@ services:
       # - TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db
     # 健康检测
     health_check:
-      test:
-        - CMD-SHELL
-        # 使用 timeout 强制 3 秒后终止，返回码 200(成功) 或 404(不存在) 都视为健康
-        - 'timeout 3 wget -S -O /dev/null http://host.lzcapp:59902 2>&1 | grep -qE "HTTP/.* (200|404)"'
+      test_url: http://host.lzcapp:59902/version
       start_period: 30s
       disable: false
     # 使用主机网络模式
