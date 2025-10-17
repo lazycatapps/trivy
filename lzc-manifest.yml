@@ -309,7 +309,7 @@ services:
       echo "Setup complete: user 65532 added to docker group (GID ${DOCKER_GID})"
 
       # 临时使用该方案启动服务，避免在 LC02 上遇到权限问题。
-      su -s /bin/sh nonroot -c "/app/trivy-web-server"
+      # su -s /bin/sh nonroot -c "/app/trivy-web-server"
 
     # 环境变量配置
     environment:
