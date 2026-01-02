@@ -231,7 +231,7 @@ services:
     image: ##IMAGE_PLACEHOLDER##
     # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
     # 运行用户（使用非 root 用户）
-    user: 65532
+    user: "65532"
     # 安装脚本（创建缓存目录、复制内置漏洞库并设置权限）
     setup_script: |
       #!/bin/sh
@@ -285,7 +285,7 @@ services:
     image: ##IMAGE_PLACEHOLDER##
     # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
     # 运行用户（非 root 用户，UID 65532）
-    user: 65532
+    user: "65532"
     # 安装脚本（root 权限，初始化配置目录权限并配置 Docker 访问）
     setup_script: |
       #!/bin/sh

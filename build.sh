@@ -42,7 +42,7 @@ echo "Build time: $BUILD_TIME"
 echo "Building frontend..."
 cd frontend
 echo "Installing frontend dependencies..."
-npm install
+npm install --loglevel=error
 echo "Building frontend..."
 REACT_APP_VERSION=$APP_VERSION \
 REACT_APP_GIT_COMMIT=$GIT_COMMIT \
