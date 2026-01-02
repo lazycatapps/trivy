@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG commit_id=dev
-ARG TRIVY_VERSION=0.67.2
+ARG TRIVY_VERSION=0.68.2
 
 FROM golang:1.25-alpine AS builder
 
