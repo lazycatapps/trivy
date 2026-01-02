@@ -46,7 +46,14 @@ USER 65532:65532
 
 ENV HOME=/home/nonroot
 
-# Download Trivy vulnerability databases (before switching to non-root user)
+# Download Trivy vulnerability databases as non-root user
+# Why pre-download?
+# 1. Speed up first deployment: Avoids downloading 1.3GB Java DB at runtime
+# 2. Offline deployment: Image contains DB, no internet required
+# 3. Reduce runtime dependency: No reliance on external network stability
+#
+# Note: Even with pre-downloaded DB, Trivy Server will still auto-initialize
+# Java DB on first scan of Java images (using cached files, no re-download)
 RUN trivy image --download-db-only --cache-dir /home/nonroot/.cache/trivy \
     && trivy image --download-java-db-only --cache-dir /home/nonroot/.cache/trivy
 

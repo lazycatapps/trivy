@@ -40,7 +40,7 @@ services:
       - SYNC_HOST=host.lzcapp
       - SYNC_PORT=59901
       - SYNC_DEFAULT_SOURCE_REGISTRY=registry.lazycat.cloud/
-      - SYNC_DEFAULT_DEST_REGISTRY=docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/
+      - SYNC_DEFAULT_DEST_REGISTRY=registry.${LAZYCAT_BOX_NAME}.heiyu.space/
 ```
 
 ### 工作原理

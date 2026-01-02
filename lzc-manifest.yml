@@ -229,7 +229,7 @@ services:
   # Trivy Server 服务
   trivy-server:
     image: ##IMAGE_PLACEHOLDER##
-    # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
+    # image: registry.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
     # 运行用户（使用非 root 用户）
     user: "65532"
     # 安装脚本（创建缓存目录、复制内置漏洞库并设置权限）
@@ -240,22 +240,39 @@ services:
 
       # 如果容器自带漏洞库（$HOME/.cache/trivy），则复制到持久化缓存目录
       if [ -d "/home/nonroot/.cache/trivy" ]; then
-        echo "Copying built-in vulnerability database to cache directory..."
+        echo "=== Copying built-in vulnerability database to cache directory ==="
+        echo "Source directory content:"
+        ls -lah /home/nonroot/.cache/trivy/
+
         cp -r /home/nonroot/.cache/trivy/* /lzcapp/cache/trivy/
-        echo "Vulnerability database copied successfully"
+
+        echo "Target directory content after copy:"
+        ls -lah /lzcapp/cache/trivy/
+
+        # 检查关键文件
+        if [ -d "/lzcapp/cache/trivy/db" ]; then
+          echo "Main DB found: $(ls -lh /lzcapp/cache/trivy/db/)"
+        fi
+        if [ -d "/lzcapp/cache/trivy/java-db" ]; then
+          echo "Java DB found: $(ls -lh /lzcapp/cache/trivy/java-db/)"
+        fi
+
+        echo "=== Vulnerability database copied successfully ==="
       else
-        echo "No built-in vulnerability database found, will download on first use"
+        echo "WARNING: No built-in vulnerability database found at /home/nonroot/.cache/trivy"
+        echo "Will download on first use"
       fi
 
       # 设置权限
       chown -R 65532:65532 /lzcapp/cache/trivy
-      echo "Trivy cache directory prepared"
+      echo "Permissions set for trivy cache directory (owner: 65532:65532)"
 
       # 自动导出环境变量到临时文件（排除个人环境变量如 HOME, USER, SHELL 等）
       env | grep -vE '^(HOME=|USER=|SHELL=|PWD=|LOGNAME=|PATH=)' | sed 's/^/export /' > /tmp/trivy-server.env
 
       # Run Trivy server as the nonroot user from its home directory
-      # TODO: 当前 trivy server 不支持跳过 java 漏洞库更新，需要该 trivy 社区反馈。
+      # Note: trivy server only supports --skip-db-update, NOT --skip-java-db-update
+      # Java DB is managed automatically by the server
       su -s /bin/sh nonroot -c "source /tmp/trivy-server.env && cd ~ && trivy server --listen \${TRIVY_LISTEN} --cache-dir \${TRIVY_CACHE_DIR} --skip-db-update=\${TRIVY_SKIP_DB_UPDATE:-false}"
     # 环境变量
     environment:
@@ -265,8 +282,10 @@ services:
       - TZ=Asia/Shanghai
 
       # 漏洞库配置（Trivy Server 端）
-      - TRIVY_SKIP_DB_UPDATE=true  # 跳过主漏洞库更新
-      - TRIVY_SKIP_JAVA_DB_UPDATE=true  # 跳过 java 漏洞库更新
+      # 注意：trivy server 命令只支持 --skip-db-update，不支持 --skip-java-db-update
+      # Java DB 由 Trivy Server 自动管理，会检测缓存并在需要时自动初始化
+      # Dockerfile 已预先下载漏洞库，Server 会智能检测并使用缓存，不会重复下载
+      - TRIVY_SKIP_DB_UPDATE=false  # 允许主漏洞库更新（有缓存时会跳过下载）
       # 如需使用国内镜像源，取消下面两行注释并配置实际的 URL
       # - TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db
       # - TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db
@@ -283,7 +302,7 @@ services:
   backend:
     # 使用占位符，构建时会替换为实际镜像地址
     image: ##IMAGE_PLACEHOLDER##
-    # image: docker-registry-ui.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
+    # image: registry.${LAZYCAT_BOX_NAME}.heiyu.space/trivy/backend:latest
     # 运行用户（非 root 用户，UID 65532）
     user: "65532"
     # 安装脚本（root 权限，初始化配置目录权限并配置 Docker 访问）

@@ -1,4 +1,4 @@
-# Reusable workflow that builds and pushes a Docker image using LazyCAT conventions
+# Reusable workflow that builds and pushes a Docker image using Lazycat conventions
 name: reusable-build-docker-image
 
 on:

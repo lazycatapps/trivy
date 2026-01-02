@@ -60,8 +60,8 @@ func (e *realCommandExecutor) ExecuteCommand(ctx context.Context, name string, a
 	var stdout, stderr strings.Builder
 
 	// Pre-allocate capacity for better performance
-	stdout.Grow(64 * 1024)  // 64KB initial capacity
-	stderr.Grow(8 * 1024)   // 8KB initial capacity
+	stdout.Grow(64 * 1024) // 64KB initial capacity
+	stderr.Grow(8 * 1024)  // 8KB initial capacity
 
 	wg.Add(2)
 	go func() {
@@ -455,8 +455,10 @@ func (s *scanServiceImpl) buildTrivyArgs(task *models.ScanTask) []string {
 	}
 
 	// Skip database updates (managed by Trivy Server in client-server mode)
+	// Note: Only skip main DB update. Do NOT skip Java DB update to allow server
+	// to automatically initialize/update Java DB when needed (especially on first run)
 	args = append(args, "--skip-db-update")
-	args = append(args, "--skip-java-db-update")
+	// args = append(args, "--skip-java-db-update")
 
 	// Force remote image source (pull from registry instead of local Docker/Containerd/Podman)
 	args = append(args, "--image-src", "remote")

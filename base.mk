@@ -1,10 +1,12 @@
-# base.mk - Common Makefile for LazyCAT Apps projects
+# base.mk - Common Makefile for Lazycat Apps projects
 # This file should be included in your project's Makefile
 #
 # Required tools:
-#   lzc-cli         - LazyCAT CLI tool
+#   lzc-cli         - Lazycat CLI tool
 #                     Install: npm install -g @lazycatcloud/lzc-cli
 #                     Auto-completion: lzc-cli completion >> ~/.zshrc
+#   docker2lzc      - Docker manifest converter for Lazycat projects
+#                     Install: npm install -g docker2lzc
 #
 # Required variables (define in your Makefile):
 #   PROJECT_TYPE    - lpk-only or docker-lpk
@@ -36,7 +38,7 @@
 
 # base.mk metadata
 BASE_MK_PATH := $(abspath $(lastword $(filter %base.mk,$(MAKEFILE_LIST))))
-BASE_MK_VERSION := 2025-10-15 23:45:19
+BASE_MK_VERSION := 2025-11-01 11:00:00
 SYNC_TARGET ?= all
 LAZYCLI_SYNC_SCRIPT_URL ?= https://raw.githubusercontent.com/lazycatapps/hack/main/scripts/lazycli.sh
 LAZYCLI_LOCAL_SCRIPT ?= ../hack/scripts/lazycli.sh
@@ -66,7 +68,7 @@ ifndef APP_ID
     APP_ID := $(APP_ID_PREFIX)$(APP_NAME)
 endif
 
-# LazyCAT Box configuration
+# Lazycat Box configuration
 LAZYCAT_BOX_FALLBACK ?= 0
 ifndef LAZYCAT_BOX_NAME
     LAZYCAT_BOX_NAME := $(shell command -v lzc-cli >/dev/null 2>&1 && lzc-cli box default 2>/dev/null)
@@ -86,12 +88,12 @@ ifndef REGISTRY
     ifeq ($(LAZYCAT_BOX_FALLBACK),1)
         REGISTRY :=
     else
-        REGISTRY := docker-registry-ui.$(LAZYCAT_BOX_NAME).heiyu.space
+        REGISTRY := registry.$(LAZYCAT_BOX_NAME).heiyu.space
     endif
 endif
 
 ifeq ($(LAZYCAT_BOX_FALLBACK),1)
-$(warning LazyCAT box name was not auto-detected; install lzc-cli or set LAZYCAT_BOX_NAME/REGISTRY to avoid using the fallback settings.)
+$(warning Lazycat box name was not auto-detected; install lzc-cli or set LAZYCAT_BOX_NAME/REGISTRY to avoid using the fallback settings.)
 endif
 
 ifdef REGISTRY
@@ -199,7 +201,7 @@ ifeq ($(PROJECT_TYPE),docker-lpk)
 	@$(call print_info,Image: $(FULL_IMAGE_NAME))
 endif
 ifeq ($(LAZYCAT_BOX_FALLBACK),1)
-	@$(call print_warning,LazyCAT box name not detected. Install lzc-cli or set LAZYCAT_BOX_NAME/REGISTRY for Docker workflows.)
+	@$(call print_warning,Lazycat box name not detected. Install lzc-cli or set LAZYCAT_BOX_NAME/REGISTRY for Docker workflows.)
 endif
 
 ##@ Building
@@ -221,6 +223,11 @@ clean-default: ## Clean build artifacts
 
 ifeq ($(PROJECT_TYPE),docker-lpk)
 
+# Container management configuration
+CONTAINER_NAME ?= $(PROJECT_NAME)
+CONTAINER_SHELL ?= /bin/sh
+DOCKER_RUN_ARGS ?=
+
 .PHONY: docker-build-default
 docker-build-default: ## Build Docker image
 	@$(call print_info,Building Docker image: $(FULL_IMAGE_NAME))
@@ -238,6 +245,40 @@ docker-run-default: ## Run Docker container locally
 	@$(call print_info,Running Docker container...)
 	docker run --rm -it $(FULL_IMAGE_NAME)
 
+##@ Container Management (docker-lpk projects only)
+
+.PHONY: run-default
+run-default: ## Run container locally
+	@$(call print_info,Ensuring container $(CONTAINER_NAME) is running...)
+	@if [ -n "$$(docker ps -q --filter 'name=^$(CONTAINER_NAME)$$')" ]; then \
+		echo "Container $(CONTAINER_NAME) already running. Skipping restart."; \
+	else \
+		if [ -n "$$(docker ps -aq --filter 'name=^$(CONTAINER_NAME)$$')" ]; then \
+			echo "Removing existing container $(CONTAINER_NAME)..."; \
+			docker rm $(CONTAINER_NAME) >/dev/null; \
+		fi; \
+		docker run -d --name $(CONTAINER_NAME) $(DOCKER_RUN_ARGS) $(FULL_IMAGE_NAME); \
+	fi
+	@$(call print_success,Container ready!)
+
+.PHONY: stop-default
+stop-default: ## Stop and remove container
+	@$(call print_info,Stopping container...)
+	-docker stop $(CONTAINER_NAME)
+	-docker rm $(CONTAINER_NAME)
+	@$(call print_success,Container stopped!)
+
+.PHONY: restart-default
+restart-default: stop-default run-default ## Restart container
+
+.PHONY: logs-default
+logs-default: ## Show container logs
+	docker logs -f $(CONTAINER_NAME)
+
+.PHONY: shell-default
+shell-default: ## Open shell in running container
+	docker exec -it $(CONTAINER_NAME) $(CONTAINER_SHELL)
+
 endif
 
 ##@ Release
@@ -245,7 +286,7 @@ endif
 .PHONY: lpk-default
 lpk-default: ## Package LPK
 	@$(call print_info,Building LPK package...)
-	@command -v lzc-cli >/dev/null 2>&1 || ($(call print_error,lzc-cli not found. Please install LazyCAT CLI) && exit 1)
+	@command -v lzc-cli >/dev/null 2>&1 || ($(call print_error,lzc-cli not found. Please install Lazycat CLI) && exit 1)
 	lzc-cli project build
 	@$(call print_success,LPK package built successfully)
 
@@ -258,14 +299,34 @@ deploy-default: lpk-default ## Build and install LPK package
 		exit 1; \
 	fi; \
 	echo "Installing $$LPK_FILE..."; \
-	lzc-cli app install "$$LPK_FILE"
+	if command -v lpk-manager >/dev/null 2>&1; then \
+		LPK_PATH=$$(realpath "$$LPK_FILE"); \
+		lpk-manager install "$$LPK_PATH"; \
+	else \
+		lzc-cli app install "$$LPK_FILE"; \
+	fi
 	@$(call print_success,Installation completed)
 
 .PHONY: uninstall-default
-uninstall-default: ## Uninstall the LPK package
-	@$(call print_info,Uninstalling $(APP_ID)...)
-	lzc-cli app uninstall $(APP_ID)
+uninstall-default: ## Uninstall the LPK package (data preserved)
+	@$(call print_info,Uninstalling $(APP_ID) (data will be preserved)...)
+	@if command -v lpk-manager >/dev/null 2>&1; then \
+		lpk-manager uninstall $(APP_ID); \
+	else \
+		lzc-cli app uninstall $(APP_ID); \
+	fi
 	@$(call print_success,Uninstallation completed)
+
+.PHONY: uninstall-clean-default
+uninstall-clean-default: ## Uninstall the LPK package and delete all data
+	@$(call print_warning,Uninstalling $(APP_ID) and DELETING ALL DATA...)
+	@printf "%b[WARNING]%b This will permanently delete all application data!\\n" "$(COLOR_WARNING)" "$(COLOR_RESET)"
+	@if command -v lpk-manager >/dev/null 2>&1; then \
+		lpk-manager uninstall --delete-data $(APP_ID); \
+	else \
+		lzc-cli app uninstall --delete-data $(APP_ID); \
+	fi
+	@$(call print_success,Uninstallation with data deletion completed)
 
 .PHONY: list-packages-default
 list-packages-default: ## List all LPK packages in current directory
@@ -332,6 +393,13 @@ install-lzc-cli-default: ## Install lzc-cli tool
 	@$(call print_success,lzc-cli installed successfully)
 	@$(call print_info,To enable auto-completion, run: lzc-cli completion >> ~/.zshrc)
 
+.PHONY: appstore-login-default
+appstore-login-default: ## Log into Lazycat App Store using lzc-cli
+	@$(call print_info,Attempting Lazycat App Store login)
+	@command -v lzc-cli >/dev/null 2>&1 || ($(call print_error,lzc-cli not found. Please install Lazycat CLI) && exit 1)
+	@lzc-cli appstore login
+	@$(call print_success,Authenticated with Lazycat App Store)
+
 .PHONY: version-default
 version-default: ## Show version
 	@echo $(VERSION)
@@ -339,11 +407,24 @@ version-default: ## Show version
 .PHONY: check-tools-default
 check-tools-default: ## Check if required tools are installed
 	@$(call print_info,Checking required tools...)
-	@command -v lzc-cli >/dev/null 2>&1 || ($(call print_error,lzc-cli not found) && exit 1)
+	@command -v bash >/dev/null 2>&1 && $(call print_success,bash detected) || ($(call print_error,bash not found) && exit 1)
+	@command -v curl >/dev/null 2>&1 && $(call print_success,curl detected) || ($(call print_error,curl not found) && exit 1)
+	@command -v make >/dev/null 2>&1 && $(call print_success,make detected) || ($(call print_error,make not found) && exit 1)
+	@command -v lzc-cli >/dev/null 2>&1 && $(call print_success,lzc-cli detected) || ($(call print_error,lzc-cli not found) && exit 1)
 ifeq ($(PROJECT_TYPE),docker-lpk)
-	@command -v docker >/dev/null 2>&1 || ($(call print_error,docker not found) && exit 1)
+	@command -v docker2lzc >/dev/null 2>&1 && $(call print_success,docker2lzc detected) || ($(call print_error,docker2lzc not found. Run make install-docker2lzc) && exit 1)
+	@command -v docker >/dev/null 2>&1 && $(call print_success,docker detected) || ($(call print_error,docker not found) && exit 1)
+else
+	@$(call print_info,Skipping Docker tool checks (PROJECT_TYPE=$(PROJECT_TYPE)))
 endif
 	@$(call print_success,All required tools are installed)
+
+.PHONY: install-docker2lzc-default
+install-docker2lzc-default: ## Install docker2lzc tool
+	@$(call print_info,Installing docker2lzc...)
+	@command -v npm >/dev/null 2>&1 || ($(call print_error,npm not found. Please install Node.js first) && exit 1)
+	npm install -g docker2lzc
+	@$(call print_success,docker2lzc installed successfully)
 
 # Pattern rule to allow overriding any -default target
 # Usage: Define a target with the same name (without -default) in your Makefile to override
