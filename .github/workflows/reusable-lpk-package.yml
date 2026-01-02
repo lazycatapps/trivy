@@ -355,6 +355,8 @@ jobs:
 
       - name: Build LPK package
         env:
+          # Set timezone to Asia/Shanghai (UTC+8) to ensure correct file timestamps
+          TZ: Asia/Shanghai
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
         run: |
