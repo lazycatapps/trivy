@@ -380,9 +380,12 @@ jobs:
       - name: Publish LPK (release only)
         id: publish
         env:
-          # Set locale to avoid potential encoding issues
-          LANG: en_US.UTF-8
-          LC_ALL: en_US.UTF-8
+          # IMPORTANT: Must use 'zh' or 'en' (NOT 'en_US.UTF-8')
+          # Lazycat App Store API only accepts simple language codes: 'zh' or 'en'
+          # Using 'en_US.UTF-8' will cause publish to fail with error:
+          #   "版本信息语种超限: language (en_US) is invalid, you can specify in [zh, en]"
+          LANG: zh
+          LC_ALL: zh
           #
           CURRENT_VERSION: ${{ steps.version-info.outputs.version }}
           SUBMIT_MSG: ${{ inputs.submit_msg }}
@@ -424,11 +427,19 @@ jobs:
 
             if [ $PUBLISH_EXIT_CODE -ne 0 ]; then
               echo "❌ LPK package publish failed with exit code: $PUBLISH_EXIT_CODE"
+              echo "Publishing output:"
+              cat /tmp/publish_output.log
               exit $PUBLISH_EXIT_CODE
             fi
 
-            if grep -q "发布应用出错" /tmp/publish_output.log; then
+            # Check for error messages in both Chinese and English to ensure compatibility
+            # Chinese: "发布应用出错" (LANG=zh)
+            # English: "An error occurred when publishing the application" (LANG=en)
+            # Note: This check handles cases where the command returns 0 but still contains error messages
+            if grep -qE "(发布应用出错|An error occurred when publishing)" /tmp/publish_output.log; then
               echo "❌ LPK package publish failed: Error status code found in output"
+              echo "Publishing output:"
+              cat /tmp/publish_output.log
               exit 1
             fi
 
