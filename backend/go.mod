@@ -1,6 +1,6 @@
 module github.com/lazycatapps/trivy/backend
 
-go 1.25.1
+go 1.26.1
 
 require (
 	github.com/coreos/go-oidc/v3 v3.15.0
