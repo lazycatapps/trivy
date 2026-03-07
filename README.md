@@ -114,6 +114,31 @@ lzc build
 - `TRIVY_MAX_WORKERS`: 最大并发扫描工作线程数，默认 `5`
 - `TRIVY_SCAN_RETENTION_DAYS`: 扫描历史保留天数，默认 `90`
 
+Trivy Server 漏洞库更新配置（在 `lzc-manifest.yml` 的 `trivy-server` 服务中设置）：
+- `TRIVY_SKIP_DB_UPDATE`: 是否跳过启动时的漏洞库更新检查，默认 `true`
+
+  > **默认禁用自动更新**：Lazycat 设备可能无法访问 `ghcr.io`，启动时联网更新失败会导致服务崩溃，
+  > 因此默认使用镜像内置的漏洞库。若需启用自动更新，请参考以下方式：
+
+  **方式一：设备可直接访问 ghcr.io**
+
+  ```yaml
+  # lzc-manifest.yml - trivy-server.environment
+  - TRIVY_SKIP_DB_UPDATE=false
+  ```
+
+  **方式二：配置国内镜像源（推荐）**
+
+  ```yaml
+  # lzc-manifest.yml - trivy-server.environment
+  - TRIVY_SKIP_DB_UPDATE=false
+  - TRIVY_DB_REPOSITORY=ghcr.nju.edu.cn/aquasecurity/trivy-db
+  - TRIVY_JAVA_DB_REPOSITORY=ghcr.nju.edu.cn/aquasecurity/trivy-java-db
+  ```
+
+  **不启用自动更新时如何保持漏洞库时效性**：通过定期升级应用版本（重新构建镜像）来更新，
+  建议每 1-2 个月发版一次。
+
 OIDC 认证环境变量（可选）：
 - `TRIVY_OIDC_CLIENT_ID=${LAZYCAT_AUTH_OIDC_CLIENT_ID}`
 - `TRIVY_OIDC_CLIENT_SECRET=${LAZYCAT_AUTH_OIDC_CLIENT_SECRET}`

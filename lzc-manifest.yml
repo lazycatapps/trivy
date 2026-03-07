@@ -284,8 +284,9 @@ services:
       # 漏洞库配置（Trivy Server 端）
       # 注意：trivy server 命令只支持 --skip-db-update，不支持 --skip-java-db-update
       # Java DB 由 Trivy Server 自动管理，会检测缓存并在需要时自动初始化
-      # Dockerfile 已预先下载漏洞库，Server 会智能检测并使用缓存，不会重复下载
-      - TRIVY_SKIP_DB_UPDATE=false  # 允许主漏洞库更新（有缓存时会跳过下载）
+      # 设置为 true：禁止启动时联网更新，完全使用 Dockerfile 预下载的内置漏洞库
+      # 若需更新漏洞库，请通过升级应用版本（重新构建镜像）来获取最新数据库
+      - TRIVY_SKIP_DB_UPDATE=true   # 禁止自动更新漏洞库，使用 Dockerfile 预下载的内置漏洞库
       # 如需使用国内镜像源，取消下面两行注释并配置实际的 URL
       # - TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db
       # - TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db

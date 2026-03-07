@@ -462,6 +462,53 @@ docker exec -it trivy-server trivy image --download-db-only
 2. 部署多副本，配置 PVC `ReadWriteMany` 访问模式
 3. 或使用外部缓存（Redis），但需自定义实现
 
+### Q: Lazycat App 部署场景下，如何启用漏洞库自动更新？
+
+**背景**：Lazycat App（LPK）部署中，`lzc-manifest.yml` 默认设置 `TRIVY_SKIP_DB_UPDATE=true`，
+原因是 Lazycat 设备可能无法访问 `ghcr.io`（GitHub Container Registry），启动时尝试更新会导致
+连接超时并触发 panic 崩溃。
+
+**如果你的设备可以访问公网（ghcr.io）**，可以改为自动更新：
+
+**方式一：直接启用自动更新（设备可访问 ghcr.io）**
+
+修改 `lzc-manifest.yml` 中 `trivy-server` 的环境变量：
+
+```yaml
+- TRIVY_SKIP_DB_UPDATE=false  # 启用自动更新
+```
+
+同时建议延长健康检查的 `start_period`，给首次更新留足时间：
+
+```yaml
+health_check:
+  test_url: http://host.lzcapp:59902/version
+  start_period: 120s  # 首次更新约需 1-2 分钟
+  disable: false
+```
+
+**方式二：配置国内镜像源（推荐，访问更稳定）**
+
+修改 `lzc-manifest.yml` 中 `trivy-server` 的环境变量：
+
+```yaml
+- TRIVY_SKIP_DB_UPDATE=false
+- TRIVY_DB_REPOSITORY=ghcr.nju.edu.cn/aquasecurity/trivy-db        # 南京大学镜像
+- TRIVY_JAVA_DB_REPOSITORY=ghcr.nju.edu.cn/aquasecurity/trivy-java-db
+```
+
+> 注意：镜像源的可用性可能随时变化，请确认地址可访问后再使用。
+
+**更新频率说明**：
+- Trivy 每次启动时检查 `metadata.json` 中的 `NextUpdate` 字段
+- 若当前时间超过 `NextUpdate`（通常距上次更新 12 小时后），则触发更新
+- 更新完成后 Trivy Server 正常提供服务
+
+**默认策略（`TRIVY_SKIP_DB_UPDATE=true`）的更新方式**：
+- 通过**升级应用版本**（重新构建镜像）来更新漏洞库
+- Dockerfile 构建时会下载当时最新的漏洞库并打包进镜像
+- 建议每 1-2 个月发布新版本以保持漏洞库时效性
+
 ## 参考资料
 
 - [Trivy 官方文档](https://aquasecurity.github.io/trivy/)
